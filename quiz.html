@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>英単語クイズ（音声付き）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+      color: #111;
+    }
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    .q-number {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .question {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .sub {
+      font-size: 16px;
+      color: #444;
+      margin-bottom: 16px;
+    }
+    .sound-btn {
+      padding: 10px 18px;
+      font-size: 15px;
+      border-radius: 999px;
+      border: none;
+      background: #007aff;
+      color: #fff;
+      margin-bottom: 20px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .choices {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    button.choice {
+      padding: 14px 16px;
+      font-size: 17px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button.choice.correct {
+      background: #e6f7e6;
+      border-color: #27ae60;
+      color: #1e8449;
+    }
+    button.choice.wrong {
+      background: #ffecec;
+      border-color: #e74c3c;
+      color: #c0392b;
+    }
+    .feedback {
+      min-height: 22px;
+      font-size: 16px;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .feedback.correct {
+      color: #27ae60;
+    }
+    .feedback.wrong {
+      color: #e74c3c;
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav button {
+      padding: 12px 20px;
+      font-size: 15px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #007aff;
+      color: #fff;
+    }
+    .nav button:disabled {
+      background: #ccc;
+      cursor: default;
+    }
+    .progress {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="q-number" id="qNumber"></div>
+      <div class="question" id="questionText"></div>
+      <div class="sub" id="subText"></div>
+
+      <!-- 🔊 音声ボタン -->
+      <button class="sound-btn" id="soundBtn" style="display:none;">🔊 再生</button>
+
+      <div class="choices" id="choices"></div>
+      <div class="feedback" id="feedback"></div>
+
+      <div class="nav">
+        <button id="prevBtn">前へ</button>
+        <span class="progress" id="progress"></span>
+        <button id="nextBtn">次へ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const quiz = [
+      { type:"meaning", question:"decide の意味はどれ？", sub:"意味を1つ選んでください。", audio:null,
+        choices:["決定する","信じる","感動させる","批判する"], correctIndex:0 },
+
+      { type:"sentence", question:"次の英文の意味として正しいものは？", sub:"She decided to study abroad.",
+        audio:"She decided to study abroad.",
+        choices:["彼女は海外で勉強することを決定した","彼女は海外で勉強すると信じた","彼女は海外で勉強する人を救った","彼女は海外で勉強する人を批判した"], correctIndex:0 },
+
+      { type:"meaning", question:"believe の意味はどれ？", sub:"意味を1つ選んでください。", audio:null,
+        choices:["信じる","批判する","救う","決定する"], correctIndex:0 },
+
+      { type:"sentence", question:"次の英文の意味として正しいものは？", sub:"I believe his story.",
+        audio:"I believe his story.",
+        choices:["私は彼の話を信じる","私は彼の話を批判する","私は彼の話を救う","私は彼の話を決定する"], correctIndex:0 },
+
+      { type:"meaning", question:"impress の意味はどれ？", sub:"意味を1つ選んでください。", audio:null,
+        choices:["感動させる","批判する","信じる","救う"], correctIndex:0 },
+
+      { type:"sentence", question:"次の英文の意味として正しいものは？", sub:"The performance impressed the audience.",
+        audio:"The performance impressed the audience.",
+        choices:["その演技は観客を感動させた","その演技は観客を救った","その演技は観客を批判した","その演技は観客を信じた"], correctIndex:0 },
+
+      { type:"meaning", question:"save の意味はどれ？", sub:"意味を1つ選んでください。", audio:null,
+        choices:["救う","感動させる","信じる","批判する"], correctIndex:0 },
+
+      { type:"sentence", question:"次の英文の意味として正しいものは？", sub:"He saved the child from danger.",
+        audio:"He saved the child from danger.",
+        choices:["彼はその子どもを危険から救った","彼はその子どもを危険から批判した","彼はその子どもを危険から感動させた","彼はその子どもを危険から信じた"], correctIndex:0 },
+
+      { type:"meaning", question:"criticize の意味はどれ？", sub:"意味を1つ選んでください。", audio:null,
+        choices:["批判する","救う","信じる","決定する"], correctIndex:0 },
+
+      { type:"sentence", question:"次の英文の意味として正しいものは？", sub:"They criticized the new policy.",
+        audio:"They criticized the new policy.",
+        choices:["彼らは新しい方針を批判した","彼らは新しい方針を救った","彼らは新しい方針を信じた","彼らは新しい方針を決定した"], correctIndex:0 }
+    ];
+
+    let current = 0;
+
+    const qNumber = document.getElementById("qNumber");
+    const questionText = document.getElementById("questionText");
+    const subText = document.getElementById("subText");
+    const soundBtn = document.getElementById("soundBtn");
+    const choicesDiv = document.getElementById("choices");
+    const feedback = document.getElementById("feedback");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const progress = document.getElementById("progress");
+
+    function speak(text) {
+      const uttr = new SpeechSynthesisUtterance(text);
+      uttr.lang = "en-US";
+      speechSynthesis.speak(uttr);
+    }
+
+    function renderQuestion() {
+      const q = quiz[current];
+      qNumber.textContent = `Q${current + 1} / ${quiz.length}`;
+      questionText.textContent = q.question;
+      subText.textContent = q.sub;
+      feedback.textContent = "";
+      feedback.className = "feedback";
+
+      if (q.audio) {
+        soundBtn.style.display = "inline-flex";
+        soundBtn.onclick = () => speak(q.audio);
+      } else {
+        soundBtn.style.display = "none";
+      }
+
+      choicesDiv.innerHTML = "";
+      q.choices.forEach((choiceText, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = choiceText;
+        btn.className = "choice";
+        btn.onclick = () => handleAnswer(index, btn);
+        choicesDiv.appendChild(btn);
+      });
+
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === quiz.length - 1;
+      progress.textContent = `${current + 1} / ${quiz.length}`;
+    }
+
+    function handleAnswer(index, btn) {
+      const q = quiz[current];
+      const buttons = choicesDiv.querySelectorAll("button.choice");
+      buttons.forEach(b => b.disabled = true);
+
+      if (index === q.correctIndex) {
+        btn.classList.add("correct");
+        feedback.textContent = "正解！";
+        feedback.classList.add("correct");
+      } else {
+        btn.classList.add("wrong");
+        feedback.textContent = "不正解…";
+        feedback.classList.add("wrong");
+        buttons[q.correctIndex].classList.add("correct");
+      }
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (current > 0) {
+        current--;
+        renderQuestion();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (current < quiz.length - 1) {
+        current++;
+        renderQuestion();
+      }
+    });
+
+    renderQuestion();
+  </script>
+</body>
+</html>
