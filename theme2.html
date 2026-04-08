@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英熟語マスター37（全問対応版）</title>
+    <style>
+        body { font-family: -apple-system, "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; display: flex; justify-content: center; }
+        #quiz-container { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.1rem; color: #444; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        #progress-bar-container { background: #eee; height: 8px; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        #progress-bar { background: #4caf50; height: 100%; width: 0%; transition: width 0.3s; }
+        .question-box { margin-bottom: 20px; }
+        #q-num { font-size: 0.9rem; color: #888; margin-bottom: 5px; }
+        .eng-sentence { font-weight: bold; font-size: 1.15rem; color: #004085; margin-bottom: 15px; line-height: 1.4; }
+        .options { display: grid; gap: 10px; }
+        button { padding: 14px; border: 1px solid #ddd; border-radius: 10px; background: #fff; cursor: pointer; text-align: left; font-size: 1rem; -webkit-tap-highlight-color: transparent; }
+        button:active { background: #e9ecef; }
+        .feedback { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .translation { font-size: 0.95rem; margin-top: 8px; color: #444; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 8px; }
+        #next-btn, #result-btn { width: 100%; padding: 15px; margin-top: 20px; background: #007bff; color: #fff; border: none; border-radius: 10px; display: none; font-size: 1rem; font-weight: bold; }
+        #result-display { text-align: center; display: none; }
+        .score-circle { font-size: 3.5rem; font-weight: bold; color: #ff5722; margin: 20px 0; }
+        .retry-btn { background: #6c757d; color: white; padding: 12px 24px; border-radius: 8px; border: none; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <h1>英熟語マスター37</h1>
+    <div id="progress-bar-container"><div id="progress-bar"></div></div>
+    
+    <div id="quiz-area">
+        <div class="question-box">
+            <p id="q-num"></p>
+            <div class="eng-sentence" id="q-sentence"></div>
+            <div class="options" id="q-options"></div>
+        </div>
+        
+        <div id="feedback-area" class="feedback">
+            <strong id="feedback-text"></strong>
+            <div class="translation" id="q-translation"></div>
+        </div>
+
+        <button id="next-btn" onclick="nextQuestion()">次の問題へ</button>
+        <button id="result-btn" onclick="showResult()">結果を見る</button>
+    </div>
+
+    <div id="result-display">
+        <h2>🎉 お疲れ様でした！</h2>
+        <p>あなたの得点は...</p>
+        <div class="score-circle" id="final-score">0</div>
+        <p id="evaluation"></p>
+        <button class="retry-btn" onclick="location.reload()">もう一度挑戦する</button>
+    </div>
+</div>
+
+<script>
+    const data = [
+        { q: "The elevator is **out of order**.", a: "故障して", t: "そのエレベーターは故障しています。" },
+        { q: "It will be a success **in the long run**.", a: "長い目で見ると", t: "長い目で見れば、それは成功するでしょう。" },
+        { q: "Those items are **on sale** now.", a: "売り出し中", t: "それらの品物は今、売り出し中です。" },
+        { q: "I will **stand by** you no matter what.", a: "味方する", t: "何があっても私はあなたの味方をします。" },
+        { q: "You **take after** your mother.", a: "に似ている", t: "あなたはあなたのお母さんに似ています。" },
+        { q: "He is ready to **take over** the company.", a: "を引き継ぐ", t: "彼は会社を引き継ぐ準備ができています。" },
+        { q: "The meeting will **take place** tomorrow.", a: "行われる", t: "会議は明日行われます。" },
+        { q: "I want to **take part in** the contest.", a: "に参加する", t: "私はそのコンテストに参加したいです。" },
+        { q: "I'll **take the day off** tomorrow.", a: "休みをとる", t: "明日は休みをとります。" },
+        { q: "It's time to **make a decision**.", a: "決意する", t: "決意する（決める）時です。" },
+        { q: "Anyone can **make a mistake**.", a: "間違える", t: "誰でも間違えることはあります。" },
+        { q: "I **make my bed** every morning.", a: "ベッドを整える", t: "私は毎朝ベッドを整えます。" },
+        { q: "Please **make sure** of the time.", a: "確認する", t: "時間を確認してください。" },
+        { q: "His explanation doesn't **make sense**.", a: "意味をなす", t: "彼の説明は意味をなしません（理解できません）。" },
+        { q: "When will his new book **come out**?", a: "出る", t: "彼の新しい本はいつ出ますか？" },
+        { q: "I **come across** him in the park.", a: "に偶然に会う", t: "私は公園で彼に偶然会います。" },
+        { q: "My dream finally **come true**.", a: "実現する", t: "私の夢がついに実現しました。" },
+        { q: "Please **put away** your toys.", a: "を片付ける", t: "おもちゃを片付けなさい。" },
+        { q: "Never **put off** until tomorrow.", a: "延期する", t: "明日まで延期してはいけません。" },
+        { q: "He **put aside** some money.", a: "取っておく", t: "彼はお金をいくらか取っておきました。" },
+        { q: "She **put on** her coat.", a: "身につける", t: "彼女はコートを身につけました。" },
+        { q: "You should **put in order** your room.", a: "を整理する", t: "あなたは部屋を整理するべきです。" },
+        { q: "The train arrived **on schedule**.", a: "予定通りに", t: "列車は予定通りに到着しました。" },
+        { q: "I didn't do that **on purpose**.", a: "わざと", t: "私はそれをわざとやったのではありません。" },
+        { q: "The species is **at risk**.", a: "危機に瀕して", t: "その種は危機に瀕しています。" },
+        { q: "I was **at a loss** for words.", a: "途方に暮れる", t: "私は言葉に詰まって（途方に暮れて）しまいました。" },
+        { q: "You can get it **for free**.", a: "無料で", t: "あなたはそれを無料で手に入れることができます。" },
+        { q: "Please **pay attention to** me.", a: "に注意する", t: "私に注意を払ってください。" },
+        { q: "You must **hand in** the homework.", a: "を提出する", t: "宿題を提出しなければなりません。" },
+        { q: "I tried to **cheer up** her.", a: "元気付ける", t: "私は彼女を元気づけようとしました。" },
+        { q: "Please **keep in mind** that rule.", a: "を心にとどめる", t: "そのルールを心にとどめておいてください。" },
+        { q: "Let's **keep in touch with** each other.", a: "と連絡をとり合う", t: "お互いに連絡をとり合いましょう。" },
+        { q: "I'll **catch up with** you soon.", a: "に追いつく", t: "すぐあなたに追いつきます。" },
+        { q: "She **come up with** a good idea.", a: "を思いつく", t: "彼女は良いアイデアを思いつきました。" },
+        { q: "I changed it **on second thought**.", a: "考え直して", t: "考え直して、それを変更しました。" },
+        { q: "That is **out of question**.", a: "問題外", t: "それは問題外です。" },
+        { q: "I am **be familiar with** the city.", a: "をよく知っている", t: "私はその街をよく知っています。" }
+    ];
+
+    // ダミーの選択肢（リストからランダムに取得）
+    const allMeanings = data.map(d => d.a);
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function loadQuestion() {
+        const qData = data[currentIdx];
+        document.getElementById('q-num').innerText = `Question ${currentIdx + 1} / ${data.length}`;
+        document.getElementById('q-sentence').innerHTML = qData.q.replace(/\*\*(.*?)\*\*/g, '<span style="text-decoration:underline;">$1</span>');
+        
+        // 進行状況バーの更新
+        document.getElementById('progress-bar').style.width = ((currentIdx / data.length) * 100) + "%";
+
+        const optionsDiv = document.getElementById('q-options');
+        optionsDiv.innerHTML = '';
+        
+        // 正解1つ + 不正解3つを生成
+        let options = [qData.a];
+        while(options.length < 4) {
+            let randomOpt = allMeanings[Math.floor(Math.random() * allMeanings.length)];
+            if(!options.includes(randomOpt)) options.push(randomOpt);
+        }
+        options.sort(() => Math.random() - 0.5); // シャッフル
+
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(opt, btn);
+            optionsDiv.appendChild(btn);
+        });
+
+        document.getElementById('feedback-area').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(selected, btn) {
+        const qData = data[currentIdx];
+        const buttons = document.querySelectorAll('#q-options button');
+        buttons.forEach(b => b.disabled = true);
+
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackText = document.getElementById('feedback-text');
+        
+        if (selected === qData.a) {
+            score++;
+            feedbackText.innerText = "⭕ 正解！";
+            feedbackArea.className = "feedback correct";
+            btn.style.background = "#c3e6cb";
+        } else {
+            feedbackText.innerText = `❌ 不正解（正解：${qData.a}）`;
+            feedbackArea.className = "feedback incorrect";
+            btn.style.background = "#f5c6cb";
+        }
+        
+        document.getElementById('q-translation').innerText = "和訳：" + qData.t;
+        feedbackArea.style.display = 'block';
+
+        if (currentIdx < data.length - 1) {
+            document.getElementById('next-btn').style.display = 'block';
+        } else {
+            document.getElementById('result-btn').style.display = 'block';
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        loadQuestion();
+    }
+
+    function showResult() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('progress-bar').style.width = "100%";
+        document.getElementById('result-display').style.display = 'block';
+        
+        const finalScore = Math.round((score / data.length) * 100);
+        document.getElementById('final-score').innerText = finalScore + "点";
+        
+        let evalMsg = "";
+        if(finalScore === 100) evalMsg = "完璧です！熟語マスターですね！";
+        else if(finalScore >= 80) evalMsg = "素晴らしい！高得点です。";
+        else if(finalScore >= 60) evalMsg = "合格点！さらに上を目指しましょう。";
+        else evalMsg = "もう一度リストを確認して復習しましょう。";
+        document.getElementById('evaluation').innerText = evalMsg;
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
